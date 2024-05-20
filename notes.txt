@@ -1,0 +1,29 @@
+import itertools
+from scipy.special import comb
+
+import pandas as pd
+
+# Group by ticker and date, then count the trades
+trade_counts = df.groupby(['CLIENT_PRODUCT_ID', 'TRADE_DATE']).size()
+
+# Unstack to fill missing dates with 0, then stack back
+trade_counts = trade_counts.unstack(fill_value=0).stack()
+
+n_comb = int(comb(len(sp500_ticker_list), 2) - len(sp500_ticker_list))
+all_ticker1 = np.empty(shape=(n_comb,), dtype=f'S{5}')
+all_ticker2 = np.empty(shape=(n_comb,), dtype=f'S{5}')
+corrs = np.zeros(n_comb)
+for i, (ticker1, ticker2) in enumerate(itertools.combinations(sp500_ticker_list, 2)):
+    if ticker1 == ticker2:
+        continue
+
+    all_ticker1[i] = ticker1
+    all_ticker2[i] = ticker2
+    trade_counts_ticker1 = trade_counts.loc[ticker1]
+    trade_counts_ticker2 = trade_counts.loc[ticker2]
+    corr = trade_counts_ticker1.corr(trade_counts_ticker2)
+    corrs[i] = corr
+    if i%10000 == 0 and i > 0:
+        print(f'{i+1}/{total_pairs} pairs processed')
+    if corr > 0.4:
+        print(f'Tickers {ticker1} and {ticker2} have a correlation of {corr}')
